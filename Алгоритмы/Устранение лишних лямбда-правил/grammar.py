@@ -13,62 +13,9 @@ class Grammar:
         self.rules = p
         self.axiom = s
 
-    """
-    def input_non_terminals(self, all_non_terminals: str) -> bool:
-        for non_terminal in all_non_terminals:
-            if ord(non_terminal) < 65 or ord(non_terminal) > 90 or non_terminal == self.axiom:
-                return False
-        self.non_terminals = set(all_non_terminals)
-        if self.axiom not in self.non_terminals:
-            self.non_terminals.add(self.axiom)
-        return True
-
-    def input_terminals(self, all_terminals: str) -> bool:
-        for terminal in all_terminals:
-            if ord(terminal) < 97 or ord(terminal) > 122:
-                return False
-        self.terminals = set(all_terminals)
-        return True
-
-    def input_rule(self, rule_data: list) -> bool:
-        antecedent: str = rule_data[0]
-        consequent: list = rule_data[1].split(" | ")
-        if antecedent not in self.non_terminals and antecedent != self.axiom:
-            return False
-        for i in range(0, len(consequent)):
-            if consequent[i] == "λ":
-                consequent[i] = ""
-            else:
-                for symbol in consequent[i]:
-                    if not(symbol in self.non_terminals or symbol in self.terminals or symbol == self.axiom):
-                        return False
-        self.rules[antecedent] = consequent
-        return True
-
-    def delete_rule_by_key(self, key: str) -> bool:
-        if key in self.rules.keys():
-            del self.rules[key]
-            return True
-        return False
-
-    def delete_incorrect_rules(self) -> bool:
-        del_result: bool = False
-        for key in self.rules:
-            if key not in self.non_terminals:
-                del self.rules[key]
-                del_result = True
-            else:
-                for consequent in self.rules[key]:
-                    if consequent != "":
-                        for symbol in consequent:
-                            if not(symbol in self.non_terminals or symbol in self.terminals):
-                                del self.rules[key]
-                                del_result = True
-        return del_result 
-
     def get_grammar_data(self) -> list:
         return [self.non_terminals, self.terminals, self.rules, self.axiom]
-    """
+
     @staticmethod
     def add_new_rules_to_dict_of_p_i(dict_of_p_i: dict,
                                      dict_key: str,
@@ -89,15 +36,19 @@ class Grammar:
                 index_shift = 0
                 for i in range(0, len(listed_pattern)):
                     if listed_pattern[i] == 0:
-                        buffer_string.replace(list_of_indexes_to_alternate[i]-index_shift, "", 1)
+                        buffer_string = buffer_string[:list_of_indexes_to_alternate[i]-index_shift] + \
+                                        buffer_string[list_of_indexes_to_alternate[i]-index_shift+1:]
                         index_shift += 1
                 p_i_right_part.append(buffer_string)
-            dict_of_p_i[dict_key] = p_i_right_part
         else:
             p_i_right_part.append(string)
+        if dict_key in dict_of_p_i.keys():
+            dict_of_p_i[dict_key] += p_i_right_part
+            dict_of_p_i[dict_key] = list(set(dict_of_p_i[dict_key]))
+        else:
             dict_of_p_i[dict_key] = p_i_right_part
 
-    def wipe_out_excess_lambda_rules(self) -> list:
+    def wipe_out_excess_lambda_rules(self):
         """
         Алгоритм устранения лишних лямбда-правил!
         ---
@@ -264,18 +215,9 @@ class Grammar:
         Шаг 6.
         Формируем новую грамматику.
         """
-        print("n_lambda: {}\npure_n_lambda: {}\nn_term_plus: {}\nq: {}\ndict_of_p_i: {}".format(n_lambda,
-                                                                                                pure_n_lambda,
-                                                                                                n_term_plus,
-                                                                                                q,
-                                                                                                dict_of_p_i))
 
         new_non_terminals = n_term_plus
         new_non_terminals.add(new_axiom)
 
-        new_grammar_data: list = [new_non_terminals,
-                                  self.terminals,
-                                  new_rules,
-                                  new_axiom]
-
-        return new_grammar_data
+        new_grammar = Grammar(new_non_terminals, self.terminals, new_rules, new_axiom)
+        return new_grammar
