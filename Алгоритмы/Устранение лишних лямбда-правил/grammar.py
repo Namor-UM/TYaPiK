@@ -39,7 +39,8 @@ class Grammar:
                         buffer_string = buffer_string[:list_of_indexes_to_alternate[i]-index_shift] + \
                                         buffer_string[list_of_indexes_to_alternate[i]-index_shift+1:]
                         index_shift += 1
-                p_i_right_part.append(buffer_string)
+                if len(buffer_string) > 0:
+                    p_i_right_part.append(buffer_string)
         else:
             p_i_right_part.append(string)
         if dict_key in dict_of_p_i.keys():
@@ -158,18 +159,18 @@ class Grammar:
         list_of_indexes_to_alternate: list[int]
         for key in q:
             for string in q[key]:
-                i = 0
+                k = 0
                 list_of_indexes_to_alternate = []
                 string_length = len(string)
-                while i < string_length:
-                    if string[i] in n_lambda and string[i] in n_term_plus:
-                        list_of_indexes_to_alternate.append(i)
-                        i += 1
-                    elif string[i] in n_lambda:
-                        string = string[:i] + string[i+1:]
+                while k < string_length:
+                    if string[k] in n_lambda and string[k] in n_term_plus:
+                        list_of_indexes_to_alternate.append(k)
+                        k += 1
+                    elif string[k] in n_lambda:
+                        string = string[:k] + string[k+1:]
                         string_length -= 1
                     else:
-                        i += 1
+                        k += 1
                 if len(string) > 0:
                     self.add_new_rules_to_dict_of_p_i(dict_of_p_i,
                                                       key,
@@ -182,21 +183,30 @@ class Grammar:
         и a != lambda.
         """
         for key in self.rules:
-            if key in n_lambda:
+            if key in pure_n_lambda:
                 continue
-            is_non_lambda = True
-            for consequents in self.rules[key]:
-                for consequent in consequents:
+            new_rules_for_key = self.rules[key]
+            i = 0
+            list_length = len(new_rules_for_key)
+            while i < list_length:
+                if len(new_rules_for_key[i]) == 0:
+                    new_rules_for_key.pop(i)
+                    list_length -= 1
+                    continue
+                k = 0
+                str_length = len(new_rules_for_key[i])
+                while k < str_length:
+                    prev_str_length = str_length
                     for symbol in n_lambda:
-                        if consequent.find(symbol) > -1:
-                            is_non_lambda = False
+                        if new_rules_for_key[i][k].find(symbol) > -1:
+                            new_rules_for_key[i] = new_rules_for_key[i][:k] + new_rules_for_key[i][k+1:]
+                            str_length -= 1
                             break
-                    if not is_non_lambda:
-                        break
-                if not is_non_lambda:
-                    break
-            if is_non_lambda:
-                new_rules[key] = self.rules[key]
+                    if prev_str_length == str_length:
+                        k += 1
+                i += 1
+            if len(new_rules_for_key) > 0:
+                new_rules[key] = new_rules_for_key
         for key in dict_of_p_i:
             new_rules[key] = dict_of_p_i[key]
 
@@ -208,7 +218,11 @@ class Grammar:
         """
         new_axiom: str = self.axiom
         if self.axiom == "" or self.axiom in n_lambda:
-            new_axiom = "new_" + self.axiom
+            for ascii_code in range(65, 91):
+                if chr(ascii_code) in n_term_plus:
+                    continue
+                new_axiom = chr(ascii_code)
+                break
             new_rules[new_axiom] = [self.axiom, ""]
 
         """
